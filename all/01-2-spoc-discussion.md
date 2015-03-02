@@ -5,7 +5,8 @@
 ---
 
 分析你所认识的操作系统（Windows、Linux、FreeBSD、Android、iOS）所具有的独特和共性的功能？
-- [x]  
+- 共性：都有多任务机制；都可以联网；都为软件提供运行环境；都有各自的输入输出交互系统；
+- 独特：Windows、IOS是封闭的，Linux、Android是开源的；Windows、Android、iOS支持触摸手写输入；
 
 >  
 
