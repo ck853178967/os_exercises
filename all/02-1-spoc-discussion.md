@@ -87,6 +87,7 @@ windows NT过程结束。
  1. 以ucore lab8的answer为例，uCore的系统调用有哪些？大致的功能分类有哪些？(w2l1)
  参考文件：https://github.com/chyyuu/ucore_lab/blob/master/labcodes_answer/lab8_result/kern/syscall/syscall.c
  读上述文件（ucore lab8的answer下的syscall目录）可知，ucore共有22个系统调用，分为系统管理/进程管理/文件系统管理等。
+ sys_exit/sys_wait等明显是系统控制部分，sys_kill则是进程控制部分，后面的read/write则是明显的文件操作了。
  
  ```
   + 采分点：说明了ucore的大致数量（二十几个），说明了ucore系统调用的主要分类（文件操作，进程管理，内存管理等）
