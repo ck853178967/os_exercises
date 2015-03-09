@@ -172,6 +172,61 @@ lab1-ex0.exe: ELF 64-bit LSB  executable, x86-64, version 1 (SYSV), dynamically 
  
  1. 通过调试[lab1_ex1](https://github.com/chyyuu/ucore_lab/blob/master/related_info/lab1/lab1-ex1.md)了解Linux应用的系统调用执行过程。(w2l1)
  
+ strace常用来跟踪进程执行时的系统调用和所接收的信号。它可以跟踪到一个进程产生的系统调用,包括参数，返回值，执行消耗的时间。（下面是一部分输出结果）
+```
+hello world
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 27.97    0.000087          29         3         3 access
+ 21.22    0.000066          33         2           open
+ 10.61    0.000033          33         1           brk
+ 10.29    0.000032          11         3           fstat
+  9.97    0.000031           4         8           mmap
+  6.11    0.000019           5         4           mprotect
+  5.47    0.000017          17         1           execve
+  3.54    0.000011          11         1           munmap
+  2.89    0.000009           9         1           write
+  0.96    0.000003           3         1           read
+  0.64    0.000002           1         2           close
+  0.32    0.000001           1         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000311                    28         3 total
+```
+ /proc/interrupts是中断报告文件，more命令类似cat，这条命令可以观察其他的中断信息：（一部分输出）
+```
+            CPU0       CPU1       CPU2       CPU3       
+  0:         17          0          0          0   IO-APIC-edge      timer
+  1:        160       1961         91        122   IO-APIC-edge      i8042
+  8:          0          1          0          0   IO-APIC-edge      rtc0
+  9:        441        249         70        135   IO-APIC-fasteoi   acpi
+ 12:        896       9148        754        801   IO-APIC-edge      i8042
+ 16:       4563      50434        514       5416   IO-APIC-fasteoi   ehci_hcd:us
+b1
+ 19:          0          0          0          0   IO-APIC-fasteoi   mmc0, jmb38
+x_ms:slot0
+ 23:          8         66          1          1   IO-APIC-fasteoi   ehci_hcd:us
+b2
+ 41:          0          0          0          0   PCI-MSI-edge      xhci_hcd
+ 42:       6689      29014       1761      10658   PCI-MSI-edge      ahci
+ 43:         13          0          0          0   PCI-MSI-edge      mei_me
+ 44:      65566        360         22         58   PCI-MSI-edge      iwlwifi
+ 45:          5         15          1          1   PCI-MSI-edge      nouveau
+ 46:       8250      76775       9019       9343   PCI-MSI-edge      i915
+ 47:         34        328          4          7   PCI-MSI-edge      snd_hda_int
+el
+ 48:         52        189      73017         37   PCI-MSI-edge      eth0
+NMI:          6          7          9          7   Non-maskable interrupts
+LOC:      96435     105801      86782      75210   Local timer interrupts
+SPU:          0          0          0          0   Spurious interrupts
+PMI:          6          7          9          7   Performance monitoring interr
+upts
+```
+ 
+执行过程：（中断->系统调用号->系统调用表->函数库->应用程序）
+ 通过软件中断0x80，系统会跳转到一个预设的内核空间地址，它指向了系统调用处理程序，即在arch/i386/kernel/entry.S文件中使用汇编语言编写的system_call函数。
+ 软中断指令int 0x80执行时，系统调用号会被放进eax寄存器，同时，sys_call_table每一项占用4个字节。这样，system_call函数可以读取eax寄存器获得当前系统调用的系统调用号，将其乘以4天生偏移地址，然后以sys_call_table为基址，基址加上偏移地址所指向的内容即是应该执行的系统调用服务例程的地址。
+ 
+
 
  ```
   + 采分点：说明了strace的大致用途，说明了系统调用的具体执行过程（包括应用，CPU硬件，操作系统的执行过程）
