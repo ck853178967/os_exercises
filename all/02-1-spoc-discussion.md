@@ -100,6 +100,62 @@ windows NT过程结束。
 ## 3.4 linux系统调用分析
  1. 通过分析[lab1_ex0](https://github.com/chyyuu/ucore_lab/blob/master/related_info/lab1/lab1-ex0.md)了解Linux应用的系统调用编写和含义。(w2l1)
  
+ objdump加-d参数可以用于反汇编可执行文件：如下是部分反汇编结果：
+Disassembly of section .init:
+
+00000000004003a8 <_init>:
+  4003a8:	48 83 ec 08          	sub    $0x8,%rsp
+  4003ac:	48 8b 05 45 0c 20 00 	mov    0x200c45(%rip),%rax        # 600ff8 <_DYNAMIC+0x1d0>
+  4003b3:	48 85 c0             	test   %rax,%rax
+  4003b6:	74 05                	je     4003bd <_init+0x15>
+  4003b8:	e8 33 00 00 00       	callq  4003f0 <__gmon_start__@plt>
+  4003bd:	48 83 c4 08          	add    $0x8,%rsp
+  4003c1:	c3                   	retq   
+
+Disassembly of section .plt:
+
+00000000004003d0 <__libc_start_main@plt-0x10>:
+  4003d0:	ff 35 32 0c 20 00    	pushq  0x200c32(%rip)        # 601008 <_GLOBAL_OFFSET_TABLE_+0x8>
+  4003d6:	ff 25 34 0c 20 00    	jmpq   *0x200c34(%rip)        # 601010 <_GLOBAL_OFFSET_TABLE_+0x10>
+  4003dc:	0f 1f 40 00          	nopl   0x0(%rax)
+ 
+ nm命令用来列出目标文件的符号清单：（一部分结果）
+0000000000000002 a AF_INET
+000000000060105c B __bss_start
+000000000060105c b completed.6972
+0000000000601028 D __data_start
+0000000000601028 W data_start
+0000000000400430 t deregister_tm_clones
+00000000004004a0 t __do_global_dtors_aux
+0000000000600e18 t __do_global_dtors_aux_fini_array_entry
+0000000000601030 D __dso_handle
+0000000000600e28 d _DYNAMIC
+000000000060105c D _edata
+0000000000601060 B _end
+0000000000400564 T _fini
+00000000004004c0 t frame_dummy
+0000000000600e10 t __frame_dummy_init_array_entry
+0000000000400670 r __FRAME_END__
+0000000000601000 d _GLOBAL_OFFSET_TABLE_
+                 w __gmon_start__
+0000000000601038 d hello
+00000000004003a8 T _init
+0000000000600e18 t __init_array_end
+0000000000600e10 t __init_array_start
+0000000000400570 R _IO_stdin_used
+0000000000000006 a IPPROTO_TCP
+                 w _ITM_deregisterTMCloneTable
+                 w _ITM_registerTMCloneTable
+0000000000600e20 d __JCR_END__
+……
+ 
+ file命令用于确定文件类型：（一部分输出）
+lab1-ex0.exe: ELF 64-bit LSB  executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.24, BuildID[sha1]=337b4a665f50f5ae7931487124df3038c7318f17, not stripped
+
+ 系统调用是应用程序同系统之间的接口，由操作系统提供。
+ 操作系统的主要功能是为管理硬件资源和为应用程序开发人员提供良好的环境来使应用程序具有更好的兼容性，为了达到这个目的，内核提供一系列具备预定功能的多内核函数，通过一组称为系统调用（system call)的接口呈现给用户。 系统调用把应用程序的请求传给内核，调用相应的的内核函数完成所需的处理，将处理结果返回给应用程序。
+ 
+ 对应在反汇编的代码中，可以看见4003b8:	e8 33 00 00 00       	callq  4003f0 <__gmon_start__@plt>一行，就是系统调用的一个实例。
 
  ```
   + 采分点：说明了objdump，nm，file的大致用途，说明了系统调用的具体含义
