@@ -46,6 +46,171 @@ NOTICE
 伙伴分配器的一个极简实现
 http://coolshell.cn/tag/buddy
 ```
+代码：
+```
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+struct free_block{
+	int start;
+	int size;
+};
+
+vector<free_block> free_area;
+vector<free_block>::iterator it;
+/*
+struct pmm_manager {
+    const char *name;                                 // XXX_pmm_manager's name
+    void (*init)(void);                               // initialize internal description&management data structure
+                                                      // (free block list, number of free block) of XXX_pmm_manager 
+    void (*init_memmap)(struct Page *base, size_t n); // setup description&management data structcure according to
+                                                      // the initial free physical memory space 
+    struct Page *(*alloc_pages)(size_t n);            // allocate >=n pages, depend on the allocation algorithm 
+    void (*free_pages)(struct Page *base, size_t n);  // free >=n pages with "base" addr of Page descriptor structures(memlayout.h)
+    size_t (*nr_free_pages)(void);                    // return the number of free pages 
+    void (*check)(void);                              // check the correctness of XXX_pmm_manager 
+};
+*/
+//worst fit allowcation
+
+void m_sort(vector<free_block> a){
+	for(int i = 0; i < a.size() - 1; i ++)
+		for(int j = i + 1; j < a.size(); j ++){
+			if(a[i].size < a[j].size){
+				free_block temp = a[i];
+				a[i] = a[j];
+				a[j] = temp;
+			}
+
+		}
+	return;
+}
+void n_sort(vector<free_block> a){
+	for(int i = 0; i < a.size() - 1; i ++)
+		for(int j = i + 1; j < a.size(); j ++){
+			if(a[i].start > a[j].start){
+				free_block temp = a[i];
+				a[i] = a[j];
+				a[j] = temp;
+			}
+
+		}
+	return;
+}
+
+static free_block *
+m_alloc_pages(int size) {
+
+	m_sort(free_area);
+	free_block * ret;
+
+	if(free_area[0].size == size){
+		ret = new free_block;
+		ret -> start = free_area[0].start;
+		ret -> size = free_area[0].size;
+		it = free_area.begin();
+		free_area.erase(it);
+	}else if(free_area[0].size > size){
+		ret = new free_block;
+		ret -> start = free_area[0].start;
+		ret -> size = size;
+		free_area[0].start = free_area[0].start + size;
+		free_area[0].size = free_area[0].size - size;
+	}
+	else{
+		ret = NULL;
+	}
+    return ret;
+}
+
+static void
+m_free_pages(int start, int size) {
+    //n_sort(free_area);
+    free_block * temp = new free_block;
+    temp -> start = start;
+    temp -> size = size;
+    free_area.push_back(*temp);
+
+    n_sort(free_area);
+    int flag = -1;
+    for(int i = 0; i < free_area.size(); i ++){
+    	if(free_area[i].start==temp->start){
+    		flag = i;
+    		break;
+    	}
+    }
+
+	if(free_area[flag].start + free_area[flag].size == free_area[flag+1].start){
+	    	free_area[flag].size = free_area[flag].size + free_area[flag+1].size;
+	    	it = free_area.begin() + flag + 1;
+	    	free_area.erase(it);
+	    }
+    if(free_area[flag-1].start + free_area[flag-1].size == free_area[flag].start){
+    	free_area[flag].start = free_area[flag-1].start;
+    	free_area[flag].size = free_area[flag-1].size + free_area[flag].size;
+    	it = free_area.begin() + flag - 1;
+    	free_area.erase(it);
+    }
+
+    return;
+}
+
+void m_print(){
+	for(int i = 0; i < free_area.size(); i ++){
+		cout << "" << free_area[i].start << " " << free_area[i].size << "\t";
+	}
+	cout << "\n";
+	return;
+}
+
+int main(){
+	char op;
+	int input1, input2;
+
+	free_area.clear();
+	free_block init;
+	init.start = 0;
+	init.size = 1024;
+	free_area.push_back(init);
+	
+	while(1){
+		cin >> op;
+		if(op == 'q'){
+			break;
+		}else if(op == 'a'){
+			cin >> input1;
+			m_alloc_pages(input1);
+			m_print();
+		}else if(op == 'f'){
+			cin >> input1 >> input2;
+			m_free_pages(input1, input2);
+			m_print();
+		}else{
+			cout << "Input Error!\n";
+			continue;
+		}
+	}
+}
+```
+运行结果：
+```
+a 64
+64 960
+a 64
+128 896
+a 128
+256 768
+a 256
+512 512
+f 64 64
+512 512 64 64
+a 64
+576 448 64 64
+q
+```
+可见最后一次分配64大小的块时，系统分配了后面那块大的，符合最差匹配的原理。
 
 --- 
 
